@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Assistant AI</title>
+    <link rel="stylesheet" href="data/styles/aiAssistant.css">
+    
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>AI Coding Assistant</h1>
+            <p class="subtitle">Get help with your code from our AI assistant. Ask questions, debug code, or request explanations.</p>
+        </header>
+        
+        <div class="main-content">
+            <div class="input-section">
+                <h2>Ask a Coding Question</h2>
+                <textarea id="prompt-input" placeholder="Enter your coding question or problem here..."></textarea>
+                
+                <select id="context-select">
+                    <option value="">General Coding Help</option>
+                    <option value="Provide clear and concise code examples">Code Examples</option>
+                    <option value="Debug the following code and explain the issues">Debugging Help</option>
+                    <option value="Explain the following code in detail">Code Explanation</option>
+                    <option value="Provide a step-by-step solution">Step-by-Step Solution</option>
+                </select>
+                
+                <button id="submit-btn">Get AI Assistance</button>
+                
+                <div class="error" id="error-message"></div>
+                <div class="success" id="success-message"></div>
+            </div>
+            
+            <div class="output-section">
+                <h2>AI Response</h2>
+                <div class="response-area" id="response-area">
+                    <p>Your response will appear here...</p>
+                </div>
+                
+                <div class="loading" id="loading">
+                    <p>Thinking... <span class="dot-flashing"></span></p>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const promptInput = document.getElementById('prompt-input');
+            const contextSelect = document.getElementById('context-select');
+            const submitBtn = document.getElementById('submit-btn');
+            const responseArea = document.getElementById('response-area');
+            const loading = document.getElementById('loading');
+            const errorMessage = document.getElementById('error-message');
+            const successMessage = document.getElementById('success-message');
+            
+            
+            const apiKey = '71260f74c15bct2a0o7b939feaa3813b';
+            
+            submitBtn.addEventListener('click', function() {
+                const prompt = promptInput.value.trim();
+                const context = contextSelect.value;
+                
+                // Validate input
+                if (!prompt) {
+                    showError('Please enter a question or coding problem.');
+                    return;
+                }
+                
+                // Clear previous messages
+                hideMessages();
+                
+                // Show loading state
+                loading.style.display = 'block';
+                responseArea.innerHTML = '';
+                
+                // Prepare the API request
+                const url = `https://api.shecodes.io/ai/v1/generate?prompt=${encodeURIComponent(prompt)}&context=${encodeURIComponent(context)}&key=${apiKey}`;
+                
+                // Make the API request
+                fetch(url)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('API request failed');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // Hide loading state
+                        loading.style.display = 'none';
+                        
+                        if (data.answer) {
+                            const formattedResponse = formatResponse(data.answer);
+                            responseArea.innerHTML = formattedResponse;
+                            showSuccess('Response received successfully!');
+                        } else {
+                            throw new Error('No answer received from AI');
+                        }
+                    })
+                    .catch(error => {
+                        loading.style.display = 'none';
+                        responseArea.innerHTML = '<p>Sorry, there was an error processing your request.</p>';
+                        showError('Error: ' + error.message);
+                    });
+            });
+            
+            function formatResponse(text) {
+                if (text.includes('```')) {
+                    const parts = text.split('```');
+                    let formattedHTML = '';
+                    
+                    for (let i = 0; i < parts.length; i++) {
+                        if (i % 2 === 0) {
+                            // Regular text
+                            formattedHTML += '<p>' + parts[i].replace(/\n/g, '<br>') + '</p>';
+                        } else {
+                            // Code block
+                            formattedHTML += '<div class="code-block">' + parts[i] + '</div>';
+                        }
+                    }
+                    
+                    return formattedHTML;
+                } else {
+                    return '<p>' + text.replace(/\n/g, '<br>') + '</p>';
+                }
+            }
+            
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.style.display = 'block';
+            }
+            
+            function showSuccess(message) {
+                successMessage.textContent = message;
+                successMessage.style.display = 'block';
+                
+                // Hide success message after 3 seconds
+                setTimeout(hideMessages, 3000);
+            }
+            
+            function hideMessages() {
+                errorMessage.style.display = 'none';
+                successMessage.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
